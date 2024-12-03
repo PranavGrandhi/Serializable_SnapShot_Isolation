@@ -8,9 +8,12 @@ class Transaction:
         self.sites_snapshot = copy.deepcopy(sites) # snapshot of the sites at the start of the transaction
         self.is_active = True
 
-    def read(self, variable_name, sites):
-        # Implement reading logic according to SSI rules
-        pass
+    def read(self, variable_name):
+        for i in range(1, 11):
+            site = self.sites_snapshot[i]
+            #if the site is up and the variable is present in the site then read the value of it
+            if site.is_up and variable_name in site.variables:
+                print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id}")
 
     def write(self, variable_name, value):
         for i in range(1, 11):

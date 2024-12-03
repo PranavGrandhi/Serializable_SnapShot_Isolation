@@ -1,5 +1,6 @@
 from sites import Site
 from transaction import Transaction
+import copy
 
 class TransactionManager:
     def __init__(self):
@@ -13,8 +14,8 @@ class TransactionManager:
         print(f"{transaction_id} begins")
 
     def read(self, transaction_id, variable_name):
-        # Placeholder for the read method
         print(f"{transaction_id} reads {variable_name}")
+        self.transactions[transaction_id].read(variable_name)
     
     def write(self, transaction_id, variable_name, value):
         print(f"{transaction_id} writes {variable_name} = {value}")
@@ -26,6 +27,12 @@ class TransactionManager:
         mysites = self.transactions[transaction_id].commit(sites)
         if mysites:
             self.sites = mysites
+            #All the transactions must also update their sites to the new sites
+            for transaction in self.transactions.values():
+                transaction.sites_snapshot = copy.deepcopy(mysites)
+        else:
+            #remove transaction from the list of transactions
+            del self.transactions[transaction_id]
 
         print("After end transaction database state:")
         for site in self.sites.values():

@@ -17,12 +17,19 @@ class TransactionManager:
         print(f"{transaction_id} reads {variable_name}")
     
     def write(self, transaction_id, variable_name, value):
-        # Placeholder for the write method
         print(f"{transaction_id} writes {variable_name} = {value}")
+        self.transactions[transaction_id].write(variable_name, value)
 
-    def end_transaction(self, transaction_id):
-        # Placeholder for the end_transaction method
+    def end_transaction(self, transaction_id, sites):
         print(f"{transaction_id} ends")
+        #if it doesnt return None, then update the sites with the new values it returns
+        mysites = self.transactions[transaction_id].commit(sites)
+        if mysites:
+            self.sites = mysites
+
+        print("After end transaction database state:")
+        for site in self.sites.values():
+            print(site)
 
     def dump(self):
         # Placeholder for the dump method
@@ -45,6 +52,7 @@ class TransactionManager:
             print(f"Site {site_id} does not exist")
 
     def process_command(self, command):
+        self.time += 1
         command = command.strip()
 
         # Handle begin(T1)
@@ -82,7 +90,7 @@ class TransactionManager:
         # Handle end(T1)
         elif command.startswith('end(') and command.endswith(')'):
             transaction_id = command[4:-1]
-            self.end_transaction(transaction_id)
+            self.end_transaction(transaction_id, self.sites)
             return
 
         # Handle dump()

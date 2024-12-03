@@ -24,12 +24,17 @@ class TransactionManager:
     def end_transaction(self, transaction_id, sites):
         print(f"{transaction_id} ends")
         #if it doesnt return None, then update the sites with the new values it returns
-        mysites = self.transactions[transaction_id].commit(sites)
-        if mysites:
-            self.sites = mysites
-            #All the transactions must also update their sites to the new sites
-            for transaction in self.transactions.values():
-                transaction.sites_snapshot = copy.deepcopy(mysites)
+        mysites_snapshot = self.transactions[transaction_id].commit(sites)
+        if mysites_snapshot:
+            # Merge the changes from the transaction's snapshot into the global sites
+            for site_id, site in mysites_snapshot.items():
+                global_site = self.sites[site_id]
+                if global_site.is_up:
+                    # Update the variables in the global site with the values from the transaction's snapshot
+                    for variable_name, variable in site.variables.items():
+                        if variable_name in self.transactions[transaction_id].variables_write:
+                            global_site.variables[variable_name].value = variable.value
+                            print(f"{transaction_id} commits {variable_name} = {variable.value} to Site {site_id}")
         else:
             #remove transaction from the list of transactions
             del self.transactions[transaction_id]

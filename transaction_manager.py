@@ -40,10 +40,13 @@ class TransactionManager:
     def read(self, transaction_id, variable_name):
         #Add variable -> transaction mapping to overall reads if the transaction_id is not available already
         if variable_name not in self.overall_reads:
-            self.overall_reads[variable_name] = [transaction_id]
+            self.overall_reads[variable_name] = [(transaction_id, self.time)]
         else:
-            if transaction_id not in self.overall_reads[variable_name]:
-                self.overall_reads[variable_name].append(transaction_id)
+        # Check if transaction_id is already associated with the variable
+            existing_transactions = [entry[0] for entry in self.overall_reads[variable_name]]
+            if transaction_id not in existing_transactions:
+                self.overall_reads[variable_name].append((transaction_id, self.time))
+
 
         if transaction_id not in self.transactions:
             print(f"{transaction_id} Aborted so not available to read")
@@ -54,11 +57,12 @@ class TransactionManager:
     def write(self, transaction_id, variable_name, value):
         #Add variable -> transaction mapping to overall writes if the transaction_id is not available already
         if variable_name not in self.overall_writes:
-            self.overall_writes[variable_name] = [transaction_id]
+            self.overall_writes[variable_name] = [(transaction_id, self.time)]
         else:
-            if transaction_id not in self.overall_writes[variable_name]:
-                self.overall_writes[variable_name].append(transaction_id)
-                
+            existing_transactions = [entry[0] for entry in self.overall_writes[variable_name]]
+            if transaction_id not in existing_transactions:
+                self.overall_writes[variable_name].append((transaction_id, self.time))
+
         if transaction_id not in self.transactions:
             print(f"{transaction_id} Aborted so not available to write")
             return

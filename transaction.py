@@ -47,39 +47,52 @@ class Transaction:
         for var in self.variables_write:
             # Check if this var exisits in self.manager.overall_writes and add edges to the serialization graph of the transactions
             if var in self.manager.overall_writes:
-                for txn in self.manager.overall_writes[var]:
-                    if txn != self.transaction_id:
+                for txn, timestamp in self.manager.overall_writes[var]:
+                    if txn != self.transaction_id and timestamp < self.manager.time:
                         if txn not in self.manager.serialization_graph:
                             self.manager.serialization_graph[txn] = []
                         if self.transaction_id not in self.manager.serialization_graph[txn]:
                             self.manager.serialization_graph[txn].append(self.transaction_id)
                             print(f"Added WW edge from {txn} to {self.transaction_id}")
 
+                            # Check if adding this Edge creates a cycle in the graph
+                            if self.manager.detect_cycle():
+                                print(f"{self.transaction_id} aborts due to cycle in serialization graph")
+                                self.abort()
+                                return None
+
             #Do the same for overall reads
             if var in self.manager.overall_reads:
-                for txn in self.manager.overall_reads[var]:
-                    if txn != self.transaction_id:
+                for txn, timestamp in self.manager.overall_reads[var]:
+                    if txn != self.transaction_id and timestamp < self.manager.time:
+                        if txn not in self.manager.serialization_graph:
+                            self.manager.serialization_graph[txn] = []
+                        if self.transaction_id not in self.manager.serialization_graph[txn]:
+                            self.manager.serialization_graph[txn].append(self.transaction_id)
+                            print(f"Added RW edge from {txn} to {self.transaction_id}")
+
+                            # Check if adding this Edge creates a cycle in the graph
+                            if self.manager.detect_cycle():
+                                print(f"{self.transaction_id} aborts due to cycle in serialization graph")
+                                self.abort()
+                                return None
+
+
+        for var in self.variables_read:
+            if var in self.manager.overall_writes:
+                for txn, timestamp in self.manager.overall_writes[var]:
+                    if txn != self.transaction_id and timestamp > self.manager.time:
                         if txn not in self.manager.serialization_graph:
                             self.manager.serialization_graph[txn] = []
                         if self.transaction_id not in self.manager.serialization_graph[txn]:
                             self.manager.serialization_graph[txn].append(self.transaction_id)
                             print(f"Added WR edge from {txn} to {self.transaction_id}")
-
-        # for var in self.variables_read:
-        #     if var in self.manager.overall_writes:
-        #         for txn in self.manager.overall_writes[var]:
-        #             if txn != self.transaction_id:
-        #                 if txn not in self.manager.serialization_graph:
-        #                     self.manager.serialization_graph[txn] = []
-        #                 if self.transaction_id not in self.manager.serialization_graph[txn]:
-        #                     self.manager.serialization_graph[txn].append(self.transaction_id)
-        #                     print(f"Added RW edge from {txn} to {self.transaction_id}")
-
-        # Check for cycles in the serialization graph
-        if self.manager.detect_cycle():
-            print(f"{self.transaction_id} aborts due to cycle in serialization graph")
-            self.abort()
-            return None
+                           
+                            # Check if adding this Edge creates a cycle in the graph
+                            if self.manager.detect_cycle():
+                                print(f"{self.transaction_id} aborts due to cycle in serialization graph")
+                                self.abort()
+                                return None
 
         # If we reach here, we can commit
         print(f"{self.transaction_id} commits")

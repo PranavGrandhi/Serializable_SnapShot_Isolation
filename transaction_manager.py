@@ -8,13 +8,43 @@ class TransactionManager:
         self.transactions = {}  
         self.time = 0
         self.last_commits = {}  
+        self.serialization_graph = {} # Adj list
+        self.overall_reads = {} # Dict of variable name to list of transactions that read it
+        self.overall_writes = {} # Dict of variable name to list of transactions that write it
 
     def begin_transaction(self, transaction_id):
         transaction = Transaction(transaction_id, self.time, self.sites, self)
         self.transactions[transaction_id] = transaction
         print(f"{transaction_id} begins")
 
+    def detect_cycle(self):
+        visited = {}
+        def dfs(txn):
+            visited[txn] = 'gray'
+            for nxt in self.serialization_graph.get(txn, []):
+                if nxt not in visited:
+                    if dfs(nxt):
+                        return True
+                elif visited[nxt] == 'gray':
+                    # cycle detected
+                    return True
+            visited[txn] = 'black'
+            return False
+
+        for txn in self.serialization_graph:
+            if txn not in visited:
+                if dfs(txn):
+                    return True
+        return False
+
     def read(self, transaction_id, variable_name):
+        #Add variable -> transaction mapping to overall reads if the transaction_id is not available already
+        if variable_name not in self.overall_reads:
+            self.overall_reads[variable_name] = [transaction_id]
+        else:
+            if transaction_id not in self.overall_reads[variable_name]:
+                self.overall_reads[variable_name].append(transaction_id)
+
         if transaction_id not in self.transactions:
             print(f"{transaction_id} Aborted so not available to read")
         else:
@@ -22,6 +52,13 @@ class TransactionManager:
             self.transactions[transaction_id].read(variable_name)
     
     def write(self, transaction_id, variable_name, value):
+        #Add variable -> transaction mapping to overall writes if the transaction_id is not available already
+        if variable_name not in self.overall_writes:
+            self.overall_writes[variable_name] = [transaction_id]
+        else:
+            if transaction_id not in self.overall_writes[variable_name]:
+                self.overall_writes[variable_name].append(transaction_id)
+                
         if transaction_id not in self.transactions:
             print(f"{transaction_id} Aborted so not available to write")
             return
@@ -96,6 +133,13 @@ class TransactionManager:
             transaction.sites_snapshot[site_id].is_up = True
 
     def process_command(self, command):
+        if '//' in command:
+            command = command.split('//', 1)[0].strip()
+
+        # If after removing comments the line is empty, just return
+        if not command:
+            return
+        
         self.time += 1
         command = command.strip()
 

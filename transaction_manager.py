@@ -6,10 +6,11 @@ class TransactionManager:
     def __init__(self):
         self.sites = {i: Site(i) for i in range(1, 11)}  # Sites 1 to 10
         self.transactions = {}  
-        self.time = 0  
+        self.time = 0
+        self.last_commits = {}  
 
     def begin_transaction(self, transaction_id):
-        transaction = Transaction(transaction_id, self.time, self.sites)
+        transaction = Transaction(transaction_id, self.time, self.sites, self)
         self.transactions[transaction_id] = transaction
         print(f"{transaction_id} begins")
 

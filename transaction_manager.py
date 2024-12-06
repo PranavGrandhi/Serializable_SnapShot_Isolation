@@ -46,6 +46,7 @@ class TransactionManager:
                         if variable_name in self.transactions[transaction_id].variables_write:
                             global_site.variables[variable_name].value = variable.value
                             print(f"{transaction_id} commits {variable_name} = {variable.value} to Site {site_id}")
+            del self.transactions[transaction_id]
         else:
             #remove transaction from the list of transactions
             del self.transactions[transaction_id]

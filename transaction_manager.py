@@ -14,14 +14,24 @@ class TransactionManager:
         print(f"{transaction_id} begins")
 
     def read(self, transaction_id, variable_name):
-        print(f"{transaction_id} reads {variable_name}")
-        self.transactions[transaction_id].read(variable_name)
+        if transaction_id not in self.transactions:
+            print(f"{transaction_id} Aborted so not available to read")
+        else:
+            print(f"{transaction_id} reads {variable_name}")
+            self.transactions[transaction_id].read(variable_name)
     
     def write(self, transaction_id, variable_name, value):
-        print(f"{transaction_id} writes {variable_name} = {value}")
-        self.transactions[transaction_id].write(variable_name, value)
+        if transaction_id not in self.transactions:
+            print(f"{transaction_id} Aborted so not available to write")
+            return
+        else:
+            print(f"{transaction_id} writes {variable_name} = {value}")
+            self.transactions[transaction_id].write(variable_name, value)
 
     def end_transaction(self, transaction_id, sites):
+        if transaction_id not in self.transactions:
+            print(f"{transaction_id} Aborted so not available to end")
+            return
         print(f"{transaction_id} ends")
         #if it doesnt return None, then update the sites with the new values it returns
         mysites_snapshot = self.transactions[transaction_id].commit(sites)
@@ -51,6 +61,21 @@ class TransactionManager:
          
     def fail_site(self, site_id):
         site = self.sites.get(site_id)
+
+        # Go through all the transactions and if they have a write on the site that failed, 
+        # then abort and remove the transaction.
+        transactions_to_remove = []
+        for transaction in self.transactions.values():
+            for variable_name in transaction.variables_write:
+                print(f"Site {site_id} failed")
+                if variable_name in site.variables:
+                    #print(f"{transaction.transaction_id} aborts because site {site_id} failed")
+                    transaction.abort()
+                    transactions_to_remove.append(transaction.transaction_id)
+            transaction.sites_snapshot[site_id].is_up = False
+        for transaction_id in transactions_to_remove:
+            del self.transactions[transaction_id]
+
         if site:
             site.fail()
         else:
@@ -62,6 +87,11 @@ class TransactionManager:
             site.recover()
         else:
             print(f"Site {site_id} does not exist")
+
+        global_site = copy.deepcopy(self.sites[site_id])
+        for transaction in self.transactions.values():
+            transaction.sites_snapshot[site_id] = copy.deepcopy(global_site)
+            transaction.sites_snapshot[site_id].is_up = True
 
     def process_command(self, command):
         self.time += 1

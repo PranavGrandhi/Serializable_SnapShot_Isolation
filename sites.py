@@ -22,4 +22,6 @@ class Site:
     def __repr__(self):
         vars_list = sorted(self.variables.values(), key=lambda v: int(v.name[1:]))
         vars_str = ', '.join(str(var) for var in vars_list)
+        if not self.is_up:
+            return f"Site {self.site_id} -- DOWN"
         return f"Site {self.site_id} -- {vars_str}"

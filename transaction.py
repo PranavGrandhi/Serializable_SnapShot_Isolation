@@ -19,47 +19,84 @@ class Transaction:
             if site.is_up and variable_name in site.variables:
                 try:
                     if len(site.failTime) == 0:
-                        print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id} XXX")
+                        print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id}")
                         found = True
-                        break
                         return
                     else:
                         for failTime in site.failTime:
-                            print(f"failtime: {failTime}")
-                            # print all the values that we are checking below in if
-                            print(f"site.commitTime[variable_name]: {site.commitTime[variable_name]} < failTime: {failTime} < self.start_time: {self.start_time}")
+                            if self.manager.verbose:
+                                print(f"failtime: {failTime}")
+                                # print all the values that we are checking below in if
+                                print(f"site.commitTime[variable_name]: {site.commitTime[variable_name]} < failTime: {failTime} < self.start_time: {self.start_time}")
                             if site.commitTime[variable_name] < failTime < self.start_time:
-                                print({self.manager.last_commits.get(variable_name, 0)} and {failTime} and {self.start_time})
+                                if self.manager.verbose:
+                                    print({self.manager.last_commits.get(variable_name, 0)} and {failTime} and {self.start_time})
                                 raise Exception(f"Site {site.site_id} failed at {failTime}")
 
-                            print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id} XXX")
+                            print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id}")
                             found = True
-                            break
                             return
                 except Exception as e:
                     pass
-            else:
-                # else site is down , we check the same as above and instead of reading it at that time we put it in a wait queue.
+            # else:
+            #     # else site is down , we check the same as above and instead of reading it at that time we put it in a wait queue.
+            #     try:
+            #         #last commit time<site failure time<transaction start time
+            #         if len(site.failTime) == 0:
+            #             print(f"site.commitTime[variable_name]: {site.commitTime[variable_name]} < failTime: {failTime} < self.start_time: {self.start_time}")
+            #             print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id}")
+            #             self.manager.waiting_transactions[site.site_id].append((self.transaction_id, variable_name))
+            #             found = True
+            #             break
+            #             return
+            #         else:
+            #             for failTime in site.failTime:
+            #                 if site.commitTime[variable_name] < failTime < self.start_time:
+            #                     raise Exception(f"Site {site.site_id} failed at {failTime}")
+
+            #                 # print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id}")
+            #             self.manager.waiting_transactions[site.site_id].append((self.transaction_id, variable_name))
+            #             found = True
+            #             break
+            #             return
+        for i in range(1, 11):
+            site = self.manager.sites[i]
+            if site.is_up==False and variable_name in site.variables:
                 try:
                     #last commit time<site failure time<transaction start time
+                    if self.manager.verbose:
+                        print(f"failtime: {site.failTime} and {site.site_id}")
+                        print(f"len(failTime): {len(site.failTime)}")
                     if len(site.failTime) == 0:
-                        print(f"site.commitTime[variable_name]: {site.commitTime[variable_name]} < failTime: {failTime} < self.start_time: {self.start_time}")
+                        if self.manager.verbose:
+                            print(f"site.commitTime[variable_name]: {site.commitTime[variable_name]} < failTime: {site.failTime} < self.start_time: {self.start_time}XYZ")
                         print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id}")
                         self.manager.waiting_transactions[site.site_id].append((self.transaction_id, variable_name))
                         found = True
-                        break
                         return
                     else:
                         for failTime in site.failTime:
+                            if self.manager.verbose:
+                                print(f"commitTime: {site.commitTime[variable_name]} < failTime: {failTime} < self.start_time: {self.start_time}")
                             if site.commitTime[variable_name] < failTime < self.start_time:
                                 raise Exception(f"Site {site.site_id} failed at {failTime}")
-
+                            else:
+                                if self.manager.verbose:
+                                    print("Adding to waiting transactions")
+                                print(f"{self.transaction_id} will read {variable_name} at site {site.site_id} after site recovers")
+                                # self.manager.waiting_transactions[site.site_id].append((self.transaction_id, variable_name,i))#saves transaction id, variable name and site id
+                                if site.site_id not in self.manager.waiting_transactions:
+                                    self.manager.waiting_transactions[site.site_id] = []  # Initialize with an empty list
+                                self.manager.waiting_transactions[site.site_id].append((self.transaction_id, variable_name, i))
+                                if self.manager.verbose:
+                                    print(f"waiting_transactions: {self.manager.waiting_transactions}")
+                                found = True
+                                return
                             # print(f"{self.transaction_id} reads {variable_name} = {site.variables[variable_name].value} at site {site.site_id}")
-                        self.manager.waiting_transactions[site.site_id].append((self.transaction_id, variable_name))
-                        found = True
-                        break
-                        return
+                        
+
                 except Exception as e:
+                    
                     pass
 
         #Abort this transaction if the variable is not available in any of the sites
@@ -75,12 +112,13 @@ class Transaction:
             if site.is_up and variable_name in site.variables:
                 site.variables[variable_name].value = value
                 self.variables_write.add(variable_name)
-                print(f"{self.transaction_id} writes {variable_name} = {value} at site {site.site_id}")
+                print(f"{self.transaction_id} writes in local snapshot the {variable_name} = {value} at site {site.site_id}")
 
         #print the state of the sites after writing
-        print("After writing:")
-        for site in self.sites_snapshot.values():
-            print(site)
+        if self.manager.verbose:
+            print("After writing:")
+            for site in self.sites_snapshot.values():
+                print(site)
 
     # returns the new value of the sites if the transaction is not aborted. Or else it sends the abort signal and returns null
     def commit(self, current_sites):

@@ -16,6 +16,7 @@ class TransactionManager:
         self.overall_reads = {} # Dict of variable name to list of transactions that read it
         self.overall_writes = {} # Dict of variable name to list of transactions that write it
         self.waiting_transactions = {} # Dict of variable name to list of transactions that are waiting for it
+        self.verbose = False
 
     def begin_transaction(self, transaction_id):
         transaction = Transaction(transaction_id, self.time, self.sites, self)
@@ -74,7 +75,8 @@ class TransactionManager:
             print(f"{transaction_id} Aborted so not available to write")
             return
         else:
-            print(f"{transaction_id} writes {variable_name} = {value}")
+            if self.verbose:
+                print(f"{transaction_id} writes {variable_name} = {value}")
             self.transactions[transaction_id].write(variable_name, value)
 
     def end_transaction(self, transaction_id, sites):
@@ -99,16 +101,16 @@ class TransactionManager:
                             #If the commited value is not equal to the already present value in global site then update the commit time with var, commit time
                             if global_site.variables[variable_name].value != variable.value:
                                 global_site.commitTime[variable_name] = self.time
-
+                            
                             print(f"{transaction_id} commits {variable_name} = {variable.value} to Site {site_id}")
             del self.transactions[transaction_id]
         else:
             #remove transaction from the list of transactions
             del self.transactions[transaction_id]
-
-        print("After end transaction database state:")
-        for site in self.sites.values():
-            print(site)
+        if self.verbose:
+            print("After end transaction database state:")
+            for site in self.sites.values():
+                print(site)
 
     def abort_transaction(self, transaction_id):
         if transaction_id not in self.transactions:
@@ -160,6 +162,14 @@ class TransactionManager:
         for transaction in self.transactions.values():
             transaction.sites_snapshot[site_id] = copy.deepcopy(global_site)
             transaction.sites_snapshot[site_id].is_up = True
+        # Go through waiting transactions and check if they can be read now
+        #   waiting_transactions: {2: [('T3', 'x8', 2)]}
+        print(f"Site {site_id} recovered")
+        print(f"Waiting transactions: {self.waiting_transactions}")
+        if site_id in self.waiting_transactions:
+            for transaction_id, variable_name,recovered_site_id in self.waiting_transactions[site_id]:
+                if recovered_site_id == site_id:
+                    self.read(transaction_id, variable_name) 
 
     def process_command(self, command):
         if '//' in command:

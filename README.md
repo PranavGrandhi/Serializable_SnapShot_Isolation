@@ -145,7 +145,7 @@ This project implements Serializable Snapshot Isolation (SSI) in a replicated, d
 - **Snapshots**: Each transaction operates on its own consistent snapshot of the database, taken at the start of the transaction.
 - **Reads**: Transactions read from their snapshot, ensuring a stable view of data throughout execution.
 - **Writes**: Changes made by a transaction are buffered locally and only apply to the database at commit time.
-- **Validation**: At commit, the transaction’s initial snapshot is compared against the global state to ensure no conflicts have occurred since its start.
+- **Validation**: At commit, the transaction’s initial snapshot is compared against the global state to ensure no conflicts have occurred since its start. It also constructs a Transaction serialization graph. At each commit time, we check if there exists a cycle where there are two consecutive RW edges. If they exist, we should abort the transaction that is causing the cycle with two RW edges.
 
 ## Sites and Variables
 

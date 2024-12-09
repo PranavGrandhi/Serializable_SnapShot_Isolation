@@ -10,11 +10,11 @@ This project implements a simple distributed transaction management system that 
 - **`transaction.py`**: Defines the `Transaction` class representing a transaction with its own local snapshot and write set.
 - **`transaction_manager.py`**: Defines the `TransactionManager` class that manages transactions, sites, and processes input commands.
 - **`main.py`**: The main entry point of the program that reads input commands from `input.txt` and executes them.
-- **`input.txt`**: A text file containing the commands to be executed by the transaction manager.
+- **`./inputs`**: A Folder containing all the input files that will get run everytime Python main.py is run.
 
 ## How to Provide Input
 
-The input commands should be written in the `input.txt` file. Each command should be on a separate line. Empty lines or lines starting with `//` are considered comments or time advancement.
+The input commands should be written in the a .txt file and added to the folder called './inputs/' Each command should be on a separate line. Empty lines or lines starting with `//` are considered comments or time advancement.
 
 ### Command Format
 
@@ -26,7 +26,7 @@ The input commands should be written in the `input.txt` file. Each command shoul
 - **Fail Site**: `fail(N)` where `N` is the site ID (1 to 10).
 - **Recover Site**: `recover(N)` where `N` is the site ID (1 to 10).
 
-### Example Input (`input.txt`)
+### Example Input (`./inputs/input1.txt`)
 
 ```
 // Test 1: T1 should abort, T2 should not, because T2 committed first and they both wrote x1 and x2.
@@ -64,50 +64,48 @@ dump()
 
 4. **View the Output**: The program will read commands from `input.txt`, execute them, and print the output to the console.
 
-## Project Details
+# Project Overview
 
-### Serializable Snapshot Isolation (SSI)
+This project implements Serializable Snapshot Isolation (SSI) in a replicated, distributed database system. It provides robust concurrency control and handles site failures and recoveries while maintaining transactional consistency and serializability.
 
-The system uses SSI to manage transaction isolation and ensure serializability:
+## Serializable Snapshot Isolation (SSI)
 
-- **Snapshots**: Each transaction operates on its own snapshot of the database, taken at the start of the transaction.
-- **Reads**: Transactions read data from their snapshot, ensuring a consistent view of the database state.
-- **Writes**: Writes are stored in the transaction's local workspace and applied to the database upon a successful commit.
-- **Validation**: At commit time, transactions check for conflicts by comparing their initial snapshot with the current database state.
+- **Snapshots**: Each transaction operates on its own consistent snapshot of the database, taken at the start of the transaction.
+- **Reads**: Transactions read from their snapshot, ensuring a stable view of data throughout execution.
+- **Writes**: Changes made by a transaction are buffered locally and only apply to the database at commit time.
+- **Validation**: At commit, the transaction’s initial snapshot is compared against the global state to ensure no conflicts have occurred since its start.
 
-### Sites and Variables
+## Sites and Variables
 
-- **Sites**: There are 10 sites, each with a unique site ID from 1 to 10. Sites can be up or down.
+- **Sites (1–10)**: The database is spread across 10 sites. Each site can independently fail or recover.
 - **Variables**:
-  - Variables `x1` to `x20` are distributed across the sites.
-  - **Even-Indexed Variables** (`x2`, `x4`, ..., `x20`):
-    - Replicated at all sites.
-    - Available as long as at least one site is up.
-  - **Odd-Indexed Variables** (`x1`, `x3`, ..., `x19`):
-    - Stored at a single site, calculated as `1 + (index mod 10)`.
-    - For example, `x1` and `x11` are at site 2, `x3` and `x13` are at site 4.
-- **Variable Initialization**: All variables are initialized to `10 * index`. For example, `x1 = 10`, `x2 = 20`, ..., `x20 = 200`.
+  - **Even-Indexed** (`x2`, `x4`, ..., `x20`): Replicated across all sites, ensuring higher availability.
+  - **Odd-Indexed** (`x1`, `x3`, ..., `x19`): Stored at exactly one site, determined by `1 + (index mod 10)`.
+- **Initialization**: All variables `x1` to `x20` start with values set to `10 * index`.
 
-### Transactions
+## Transactions
 
-- **Begin**: Transactions begin with a snapshot of the current database state.
-- **Read/Write Operations**:
-  - **Reads**: Return the value of a variable from the transaction's snapshot.
-  - **Writes**: Stored in the transaction's local write set and applied upon commit.
-- **End**: When a transaction ends, it attempts to commit:
-  - **Commit**: If validation passes (no conflicts), writes are applied to the database.
-  - **Abort**: If validation fails (conflicts detected), the transaction aborts, and changes are discarded.
+- **Begin**: A new transaction takes a snapshot of the current database state.
+- **Operations**:
+  - **Read**: Returns the value from the snapshot, unaffected by concurrent writes.
+  - **Write**: Temporarily held in the transaction’s workspace. They become durable only after commit.
+- **End (Commit/Abort)**:
+  - **Commit**: If no conflicts are found, changes are written to the database.
+  - **Abort**: On detection of conflicts or site failure issues, the transaction’s changes are discarded.
 
-### Concurrency Control
+## Concurrency Control
 
-- **Conflict Detection**: At commit time, transactions check if any variables they intend to write have been modified by other transactions since they began.
-- **First-Committer-Wins Rule**: If a conflict is detected, the transaction attempting to commit later aborts.
-- **Isolation**: Transactions operate independently without interfering with each other's snapshots.
+- **Conflict Detection**: Ensures that if a variable was modified by another transaction post-snapshot, the current transaction’s commit will fail.
+- **First-Committer-Wins**: If two transactions modify the same data, the one that attempts to commit later will abort.
+- **Isolation**: Ensures that transactions behave as if they were executed sequentially.
 
-### Site Failures and Recovery
+## Site Failures and Recovery
 
-- **Failing a Site**: Use `fail(N)` to bring down site `N`.
-- **Recovering a Site**: Use `recover(N)` to bring site `N` back up.
-- **Impact on Transactions**: Transactions must handle site availability when performing operations. If a site fails, variables stored exclusively at that site become unavailable.
+- **fail(N)**: Marks site `N` as down, making data at that site unavailable.
+- **recover(N)**: Brings site `N` back up. Replicated variables become write-available immediately, but read-availability requires a post-recovery commit.
+- **Transaction Impact**: Transactions adapt to site availability. If a required site is down and data is not replicated elsewhere, the transaction may have to wait or abort.
 
 ---
+
+By adhering to SSI, this system balances consistency, availability, and fault tolerance, creating a foundation for reliable distributed database operations.
+

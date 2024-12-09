@@ -44,25 +44,97 @@ dump()
 
 ## How to Run the Program
 
-1. **Ensure Python 3 is Installed**: Verify that Python 3 is installed on your system by running `python --version` or `python3 --version`.
+The program can be executed in two ways: **Using Terminal with Python** or **Using Reprozip**. Follow the steps below based on your preferred method.
 
-2. **Prepare the Input File**: Edit the `input.txt` file to include the commands you wish to execute.
+---
+
+## 1. Run Using Terminal with Python
+
+1. **Ensure Python 3 is Installed**:
+   - Verify Python 3 is installed on your system by running:
+     ```bash
+     python --version
+     ```
+     or
+     ```bash
+     python3 --version
+     ```
+
+2. **Prepare Input Files**:
+   - Add all input files you want to test to the `./inputs` folder.
+   - Ensure that input files are in `.txt` format.
 
 3. **Run the Program**:
+   - Navigate to the project directory where the `main.py` file is located.
+   - Execute the following command:
+     ```bash
+     python main.py
+     ```
+     or, if `python` points to Python 2:
+     ```bash
+     python3 main.py
+     ```
 
-   Open a terminal or command prompt in the project directory and execute:
+4. **View Output**:
+   - The program will process all `.txt` files in the `./inputs` folder.
+   - Output will be printed to the terminal (stdout) sequentially for all files. Note: The output is **not sorted** based on file processing order.
 
-   ```bash
-   python main.py
-   ```
+---
 
-   or, if `python` points to Python 2 on your system:
+## 2. Run Using Reprozip
 
-   ```bash
-   python3 main.py
-   ```
+Reprozip enables creating and running reproducible execution environments. Follow these steps to create and run a Reprozip-based environment:
 
-4. **View the Output**: The program will read commands from `input.txt`, execute them, and print the output to the console.
+### A. Create a Reprozip File
+
+1. **Trace Execution**:
+   - Run the following command in the project directory to trace the program's execution:
+     ```bash
+     reprozip trace python main.py
+     ```
+
+2. **Pack the Execution**:
+   - Create a `.rpz` file using the following command:
+     ```bash
+     reprozip pack SSI
+     ```
+   - This generates an archive (`SSI.rpz`) containing all required dependencies and configurations.
+
+---
+
+### B. Run the Program Using Reprounzip
+
+1. **Unpack the `.rpz` File**:
+   - Set up the directory to run the program:
+     ```bash
+     reprounzip directory setup SSI.rpz SSI
+     ```
+   - This command creates an `SSI` folder with all required files.
+
+2. **Run the Program**:
+   - Execute the program within the Reprounzip environment:
+     ```bash
+     reprounzip directory run SSI
+     ```
+
+3. **Modify Input Files**:
+   - To add or change input files:
+     - Navigate to the appropriate directory:
+       ```bash
+       cd /SSI/root/home/pvg2018/Serializable_SnapShot_Isolation/
+       ```
+     - Place your `.txt` input files in the `inputs` folder.
+
+4. **Re-run the Program**:
+   - After modifying inputs, re-run the program using:
+     ```bash
+     reprounzip directory run SSI
+     ```
+
+---
+
+This setup ensures reproducibility and allows you to test the program with different input configurations efficiently.
+
 
 # Project Overview
 

@@ -185,7 +185,7 @@ This project implements Serializable Snapshot Isolation (SSI) in a replicated, d
 - **Transaction Impact**: Transactions adapt to site availability. If a required site is down and data is not replicated elsewhere, the transaction may have to wait or abort.
 - **Wait Queue Handling**: When a site is down, read requests requiring that site’s data are placed into a wait queue. After the site recovers, these pending read requests are retried from the wait queue and served once a consistent version is available.
 
-##System Architecture Conceptual Flow:
+## System Architecture Conceptual Flow:
 
 <img width="518" alt="image" src="https://github.com/user-attachments/assets/1a53ae73-c133-49c6-b1cc-43a6bcc52dd1">
 

@@ -1,5 +1,7 @@
 
 # Transaction Management System (Serializable Snapshot Isolation Simulation  in Databases)
+# A Project for CSCI-GA.2434-001: Advanced Database Systems by Prof. Dennis Shasha
+## Project By: Pranav Grandhi(pvg2018) and Shriyesh Chandra(sc10670)
 
 This project implements a simple distributed transaction management system that simulates the behavior of transactions, sites, and variables in a database following the Serializable Snapshot Isolation (SSI) protocol. It manages read and write operations with proper isolation and concurrency control, ensuring serializability in a distributed environment.
 
@@ -171,11 +173,12 @@ This project implements Serializable Snapshot Isolation (SSI) in a replicated, d
 - **First-Committer-Wins**: If two transactions modify the same data, the one that attempts to commit later will abort.
 - **Isolation**: Ensures that transactions behave as if they were executed sequentially.
 
-## Site Failures and Recovery
+## Site Failures, Reading WaitQueue and Recovery
 
 - **fail(N)**: Marks site `N` as down, making data at that site unavailable.
 - **recover(N)**: Brings site `N` back up. Replicated variables become write-available immediately, but read-availability requires a post-recovery commit.
 - **Transaction Impact**: Transactions adapt to site availability. If a required site is down and data is not replicated elsewhere, the transaction may have to wait or abort.
+- **Wait Queue Handling**: When a site is down, read requests requiring that site’s data are placed into a wait queue. After the site recovers, these pending read requests are retried from the wait queue and served once a consistent version is available.
 
 ---
 

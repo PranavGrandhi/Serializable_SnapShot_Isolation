@@ -163,7 +163,7 @@ This project implements Serializable Snapshot Isolation (SSI) in a replicated, d
   - **Write**: Temporarily held in the transaction’s workspace. They become durable only after commit.
 - **End (Commit/Abort)**:
   - **Commit**: If no conflicts are found, changes are written to the database.
-  - **Abort**: On detection of conflicts or site failure issues, the transaction’s changes are discarded.
+  - **Abort**: On detection of conflicts or site failure issues, or cycle with two consecuitive RW edges in the serialization graph the transaction’s changes are discarded.
 
 ## Concurrency Control
 

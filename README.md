@@ -42,7 +42,7 @@ end(T1)
 dump()
 ```
 
-## How to Run the Program
+# How to Run the Program
 
 The program can be executed in two ways: **Using Terminal with Python** or **Using Reprozip**. Follow the steps below based on your preferred method.
 

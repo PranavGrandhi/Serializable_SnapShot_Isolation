@@ -1,7 +1,7 @@
 
 # Transaction Management System (Serializable Snapshot Isolation Simulation  in Databases)
-# A Project for CSCI-GA.2434-001: Advanced Database Systems by Prof. Dennis Shasha
-## Project By: Pranav Grandhi(pvg2018) and Shriyesh Chandra(sc10670)
+### A Project for CSCI-GA.2434-001: Advanced Database Systems by Prof. Dennis Shasha
+### Project By: Pranav Grandhi(pvg2018) and Shriyesh Chandra(sc10670)
 
 This project implements a simple distributed transaction management system that simulates the behavior of transactions, sites, and variables in a database following the Serializable Snapshot Isolation (SSI) protocol. It manages read and write operations with proper isolation and concurrency control, ensuring serializability in a distributed environment.
 

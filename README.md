@@ -144,6 +144,10 @@ This project implements Serializable Snapshot Isolation (SSI) in a replicated, d
 
 ## Serializable Snapshot Isolation (SSI)
 
+### SSI UML Diagram:
+<img width="475" alt="image" src="https://github.com/user-attachments/assets/5b24c1ea-99b3-4d8b-9255-0df8944cfe6c">
+
+
 - **Snapshots**: Each transaction operates on its own consistent snapshot of the database, taken at the start of the transaction.
 - **Reads**: Transactions read from their snapshot, ensuring a stable view of data throughout execution.
 - **Writes**: Changes made by a transaction are buffered locally and only apply to the database at commit time.
@@ -179,6 +183,9 @@ This project implements Serializable Snapshot Isolation (SSI) in a replicated, d
 - **recover(N)**: Brings site `N` back up. Replicated variables become write-available immediately, but read-availability requires a post-recovery commit.
 - **Transaction Impact**: Transactions adapt to site availability. If a required site is down and data is not replicated elsewhere, the transaction may have to wait or abort.
 - **Wait Queue Handling**: When a site is down, read requests requiring that site’s data are placed into a wait queue. After the site recovers, these pending read requests are retried from the wait queue and served once a consistent version is available.
+
+##System Architecture Conceptual Flow:
+<img width="518" alt="image" src="https://github.com/user-attachments/assets/1a53ae73-c133-49c6-b1cc-43a6bcc52dd1">
 
 ---
 

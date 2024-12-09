@@ -140,12 +140,13 @@ class Transaction:
                         if txn not in self.manager.serialization_graph:
                             self.manager.serialization_graph[txn] = []
                         if self.transaction_id not in self.manager.serialization_graph[txn]:
-                            self.manager.serialization_graph[txn].append(self.transaction_id)
+                            self.manager.serialization_graph[txn].append([self.transaction_id, "WW"])
                             print(f"Added WW edge from {txn} to {self.transaction_id}")
 
                             # Check if adding this Edge creates a cycle in the graph
                             if self.manager.detect_cycle():
                                 print(f"{self.transaction_id} aborts due to cycle in serialization graph")
+                                self.manager.remove_transaction(self.transaction_id)
                                 self.abort()
                                 return None
 
@@ -156,12 +157,13 @@ class Transaction:
                         if txn not in self.manager.serialization_graph:
                             self.manager.serialization_graph[txn] = []
                         if self.transaction_id not in self.manager.serialization_graph[txn]:
-                            self.manager.serialization_graph[txn].append(self.transaction_id)
+                            self.manager.serialization_graph[txn].append([self.transaction_id, "RW"])
                             print(f"Added RW edge from {txn} to {self.transaction_id}")
 
                             # Check if adding this Edge creates a cycle in the graph
                             if self.manager.detect_cycle():
                                 print(f"{self.transaction_id} aborts due to cycle in serialization graph")
+                                self.manager.remove_transaction(self.transaction_id)
                                 self.abort()
                                 return None
 
@@ -173,12 +175,13 @@ class Transaction:
                         if txn not in self.manager.serialization_graph:
                             self.manager.serialization_graph[txn] = []
                         if self.transaction_id not in self.manager.serialization_graph[txn]:
-                            self.manager.serialization_graph[txn].append(self.transaction_id)
+                            self.manager.serialization_graph[txn].append([self.transaction_id, "WR"])
                             print(f"Added WR edge from {txn} to {self.transaction_id}")
                            
                             # Check if adding this Edge creates a cycle in the graph
                             if self.manager.detect_cycle():
                                 print(f"{self.transaction_id} aborts due to cycle in serialization graph")
+                                self.manager.remove_transaction(self.transaction_id)
                                 self.abort()
                                 return None
 

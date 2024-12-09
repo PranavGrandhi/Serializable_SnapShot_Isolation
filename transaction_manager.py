@@ -25,23 +25,71 @@ class TransactionManager:
 
     def detect_cycle(self):
         visited = {}
-        def dfs(txn):
+
+        def dfs(txn, path, edge_types):
             visited[txn] = 'gray'
-            for nxt in self.serialization_graph.get(txn, []):
-                if nxt not in visited:
-                    if dfs(nxt):
+            path.append(txn)
+
+            for neighbor, edge_type in self.serialization_graph.get(txn, []):
+                if neighbor not in visited:
+                    # Continue DFS traversal
+                    if dfs(neighbor, path, edge_types + [edge_type]):
                         return True
-                elif visited[nxt] == 'gray':
-                    # cycle detected
-                    return True
+                elif visited[neighbor] == 'gray':
+                    # Cycle detected: extract the cycle path
+                    cycle_start_index = path.index(neighbor)
+                    cycle_edge_types = edge_types[cycle_start_index:]
+                    cycle_edge_types.append(edge_type)  # Include the closing edge
+
+                    # Debugging: Print the cycle and its edge types
+                    cycle_path = path[cycle_start_index:] + [neighbor]
+                    print(f"Cycle detected: {' -> '.join(cycle_path)} with edge types {cycle_edge_types}")
+
+                    # Check for two consecutive 'RW' edges, including wrap-around
+                    for i in range(len(cycle_edge_types)):
+                        current_edge = cycle_edge_types[i]
+                        next_edge = cycle_edge_types[(i + 1) % len(cycle_edge_types)]
+                        if current_edge == 'RW' and next_edge == 'RW':
+                            print(f"Consecutive 'RW' edges found: {current_edge} -> {next_edge}")
+                            return True  # Problematic cycle detected
+
+            path.pop()
             visited[txn] = 'black'
             return False
 
         for txn in self.serialization_graph:
             if txn not in visited:
-                if dfs(txn):
-                    return True
-        return False
+                if dfs(txn, [], []):
+                    return True  # Problematic cycle found
+
+        return False  # No problematic cycles detected
+    
+    def remove_transaction(self, txn_id):
+        """
+        Removes a transaction and all its edges (both incoming and outgoing) from the serialization graph.
+
+        Args:
+            txn_id (str): The ID of the transaction to be removed.
+        """
+        # Remove all outgoing edges from txn_id
+        if txn_id in self.serialization_graph:
+            del self.serialization_graph[txn_id]
+            print(f"Removed transaction {txn_id} and its outgoing edges from the serialization graph.")
+
+        # Remove all incoming edges to txn_id
+        transactions_to_update = []
+        for txn, edges in self.serialization_graph.items():
+            # Filter out edges that point to txn_id
+            original_edge_count = len(edges)
+            self.serialization_graph[txn] = [edge for edge in edges if edge[0] != txn_id]
+            if len(self.serialization_graph[txn]) < original_edge_count:
+                transactions_to_update.append(txn)
+
+        if self.verbose:
+            if transactions_to_update:
+                print(f"Removed incoming edges to {txn_id} from transactions: {', '.join(transactions_to_update)}.")
+            else:
+                print(f"No incoming edges to {txn_id} were found in the serialization graph.")
 
     def read(self, transaction_id, variable_name):
         #Add variable -> transaction mapping to overall reads if the transaction_id is not available already
